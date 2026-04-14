@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>req</title>
+
+  <link rel="icon" href="/favicon.ico" type="image/svg+xml">
+
+  <!-- FOUC prevention -->
+  <script>
+    (function(){var t=localStorage.getItem('theme');if(t){document.documentElement.setAttribute('data-theme',t)}else if(window.matchMedia('(prefers-color-scheme:light)').matches){document.documentElement.setAttribute('data-theme','light')}else{document.documentElement.setAttribute('data-theme','dark')}})();
+  </script>
+
+  <!-- UI Library CSS -->
+  <link rel="stylesheet" href="/ui/css/reset.css">
+  <link rel="stylesheet" href="/ui/css/tokens.css">
+  <link rel="stylesheet" href="/ui/css/typography.css">
+  <link rel="stylesheet" href="/ui/css/components.css">
+  <link rel="stylesheet" href="/ui/css/layout.css">
+  <link rel="stylesheet" href="/ui/css/utilities.css">
+
+  <!-- App CSS -->
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+
+  <nav class="nav">
+    <span class="nav__brand">req</span>
+    <ul class="nav__links">
+      <li>
+        <span class="connection-status" id="connectionStatus" title="Disconnected">
+          <span class="connection-dot"></span>
+          <span class="connection-label">Disconnected</span>
+        </span>
+      </li>
+      <li>
+        <button class="btn btn--ghost btn--sm" id="clearBtn">Clear</button>
+      </li>
+      <li>
+        <button class="theme-toggle" aria-label="Toggle theme">
+          <span class="theme-toggle__icon"></span>
+        </button>
+      </li>
+    </ul>
+  </nav>
+
+  <main class="container" style="padding-block: var(--space-5);">
+    <div class="hook-url-bar" id="hookUrlBar">
+      <label class="text-caption text-muted">Webhook URL</label>
+      <div class="hook-url-row">
+        <code class="hook-url" id="hookUrl"></code>
+        <button class="btn btn--ghost btn--sm" id="copyUrlBtn" title="Copy URL">Copy</button>
+      </div>
+    </div>
+
+    <div id="requestList"></div>
+
+    <div class="empty-state" id="emptyState">
+      <p class="empty-state__icon">&#x1F4E1;</p>
+      <p class="empty-state__text">Waiting for requests...</p>
+      <p class="text-caption text-muted mt-2">Send a request to <code id="emptyHookUrl"></code></p>
+    </div>
+  </main>
+
+  <script src="/ui/js/theme.js"></script>
+  <script src="/ui/js/toast.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>
