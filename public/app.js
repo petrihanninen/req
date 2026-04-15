@@ -279,7 +279,13 @@ function createBodySection(req) {
   display.className = "body-display";
 
   const pre = document.createElement("pre");
-  pre.textContent = formatBody(req.body, req.contentType);
+  const formatted = formatBody(req.body, req.contentType);
+  const highlighted = highlightBody(formatted, req.contentType);
+  if (highlighted) {
+    pre.innerHTML = highlighted;
+  } else {
+    pre.textContent = formatted;
+  }
   display.appendChild(pre);
 
   section.appendChild(display);
@@ -318,6 +324,155 @@ function formatBody(body, contentType) {
   }
 
   return body;
+}
+
+// --- Syntax highlighting ---
+function escapeHtml(str) {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function highlightJSON(jsonStr) {
+  let result = "";
+  let i = 0;
+  const len = jsonStr.length;
+
+  while (i < len) {
+    const ch = jsonStr[i];
+
+    if (ch === '"') {
+      // Consume the full string (handles escaped characters)
+      let end = i + 1;
+      while (end < len) {
+        if (jsonStr[end] === "\\") { end += 2; continue; }
+        if (jsonStr[end] === '"') { end++; break; }
+        end++;
+      }
+      const raw = jsonStr.slice(i, end);
+
+      // Determine if this string is an object key (followed by ':')
+      let peek = end;
+      while (peek < len && (jsonStr[peek] === " " || jsonStr[peek] === "\n" || jsonStr[peek] === "\r" || jsonStr[peek] === "\t")) peek++;
+      const cls = jsonStr[peek] === ":" ? "syn-key" : "syn-str";
+
+      result += `<span class="${cls}">${escapeHtml(raw)}</span>`;
+      i = end;
+    } else if (ch === "-" || (ch >= "0" && ch <= "9")) {
+      // Number
+      let end = i + 1;
+      while (end < len && /[\deE.+\-]/.test(jsonStr[end])) end++;
+      result += `<span class="syn-num">${jsonStr.slice(i, end)}</span>`;
+      i = end;
+    } else if (jsonStr.slice(i, i + 4) === "true") {
+      result += '<span class="syn-bool">true</span>';
+      i += 4;
+    } else if (jsonStr.slice(i, i + 5) === "false") {
+      result += '<span class="syn-bool">false</span>';
+      i += 5;
+    } else if (jsonStr.slice(i, i + 4) === "null") {
+      result += '<span class="syn-null">null</span>';
+      i += 4;
+    } else if (ch === "{" || ch === "}" || ch === "[" || ch === "]") {
+      result += `<span class="syn-bracket">${ch}</span>`;
+      i++;
+    } else {
+      // Whitespace, colons, commas — pass through escaped
+      result += escapeHtml(ch);
+      i++;
+    }
+  }
+
+  return result;
+}
+
+function highlightXML(xmlStr) {
+  let result = "";
+  let i = 0;
+  const len = xmlStr.length;
+
+  while (i < len) {
+    if (xmlStr[i] === "<") {
+      // Comment
+      if (xmlStr.slice(i, i + 4) === "<!--") {
+        const end = xmlStr.indexOf("-->", i + 4);
+        const close = end === -1 ? len : end + 3;
+        result += `<span class="syn-comment">${escapeHtml(xmlStr.slice(i, close))}</span>`;
+        i = close;
+        continue;
+      }
+
+      // CDATA
+      if (xmlStr.slice(i, i + 9) === "<![CDATA[") {
+        const end = xmlStr.indexOf("]]>", i + 9);
+        const close = end === -1 ? len : end + 3;
+        result += `<span class="syn-str">${escapeHtml(xmlStr.slice(i, close))}</span>`;
+        i = close;
+        continue;
+      }
+
+      // Tag (opening, closing, or self-closing)
+      const tagEnd = xmlStr.indexOf(">", i);
+      if (tagEnd === -1) {
+        result += escapeHtml(xmlStr.slice(i));
+        break;
+      }
+      const tagContent = xmlStr.slice(i, tagEnd + 1);
+      result += highlightXMLTag(tagContent);
+      i = tagEnd + 1;
+    } else {
+      // Text content between tags
+      let end = xmlStr.indexOf("<", i);
+      if (end === -1) end = len;
+      result += escapeHtml(xmlStr.slice(i, end));
+      i = end;
+    }
+  }
+
+  return result;
+}
+
+function highlightXMLTag(tag) {
+  // Match: < optional / , tag name, attributes, optional / , >
+  const m = tag.match(/^(<\/?)(\S+?)((?:\s+[^>]*?)?)(\s*\/?>)$/s);
+  if (!m) return escapeHtml(tag);
+
+  const [, open, name, attrs, close] = m;
+  let result = `<span class="syn-bracket">${escapeHtml(open)}</span>`;
+  result += `<span class="syn-tag">${escapeHtml(name)}</span>`;
+
+  // Highlight attributes: name="value" or name='value'
+  if (attrs) {
+    const highlighted = attrs.replace(/([a-zA-Z_:][\w:.-]*)(\s*=\s*)(["'])(.*?)\3/g, (_, aName, eq, q, aVal) => {
+      return `<span class="syn-attr">${escapeHtml(aName)}</span>${escapeHtml(eq)}<span class="syn-str">${escapeHtml(q + aVal + q)}</span>`;
+    });
+    result += highlighted;
+  }
+
+  result += `<span class="syn-bracket">${escapeHtml(close)}</span>`;
+  return result;
+}
+
+function highlightBody(formatted, contentType) {
+  if (!formatted) return null;
+
+  if (contentType && contentType.includes("application/json")) {
+    try {
+      // Verify it's valid JSON (formatBody already pretty-printed it)
+      JSON.parse(formatted);
+      return highlightJSON(formatted);
+    } catch {
+      return null;
+    }
+  }
+
+  if (contentType && (contentType.includes("text/xml") || contentType.includes("application/xml") || contentType.includes("+xml"))) {
+    return highlightXML(formatted);
+  }
+
+  if (contentType && (contentType.includes("text/html") || contentType.includes("application/xhtml"))) {
+    return highlightXML(formatted);
+  }
+
+  return null;
 }
 
 function formatBytes(bytes) {

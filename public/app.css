@@ -296,6 +296,81 @@
   margin: 0;
 }
 
+/* Syntax highlighting — dark theme (default) */
+.syn-key {
+  color: oklch(70% 0.10 195); /* teal — matches accent */
+}
+
+.syn-str {
+  color: oklch(72% 0.14 150); /* green */
+}
+
+.syn-num {
+  color: oklch(75% 0.14 75); /* amber */
+}
+
+.syn-bool {
+  color: oklch(72% 0.14 300); /* purple */
+}
+
+.syn-null {
+  color: oklch(65% 0.10 25); /* muted red */
+}
+
+.syn-bracket {
+  color: oklch(65% 0.02 260); /* dim grey */
+}
+
+.syn-tag {
+  color: oklch(72% 0.14 300); /* purple — for XML tag names */
+}
+
+.syn-attr {
+  color: oklch(70% 0.10 195); /* teal — for XML attribute names */
+}
+
+.syn-comment {
+  color: oklch(55% 0.02 260); /* dim grey italic */
+  font-style: italic;
+}
+
+/* Syntax highlighting — light theme */
+[data-theme="light"] .syn-key {
+  color: oklch(35% 0.10 195);
+}
+
+[data-theme="light"] .syn-str {
+  color: oklch(38% 0.14 150);
+}
+
+[data-theme="light"] .syn-num {
+  color: oklch(42% 0.14 55);
+}
+
+[data-theme="light"] .syn-bool {
+  color: oklch(40% 0.14 300);
+}
+
+[data-theme="light"] .syn-null {
+  color: oklch(45% 0.10 25);
+}
+
+[data-theme="light"] .syn-bracket {
+  color: oklch(50% 0.02 260);
+}
+
+[data-theme="light"] .syn-tag {
+  color: oklch(40% 0.14 300);
+}
+
+[data-theme="light"] .syn-attr {
+  color: oklch(35% 0.10 195);
+}
+
+[data-theme="light"] .syn-comment {
+  color: oklch(55% 0.02 260);
+}
+
 .body-truncated {
   font-family: var(--font-body);
   font-size: var(--text-caption);
