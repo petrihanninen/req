@@ -9,18 +9,26 @@ pnpm install
 pnpm dev
 ```
 
-The server starts on `http://localhost:3000`. Send requests to `http://localhost:3000/hook/anything` and watch them stream in via WebSocket.
-
-## Docker
-
-```bash
-docker compose up
-```
-
-Runs on `http://localhost:8080`.
+`wrangler dev` starts the Worker on `http://localhost:8787`. Send requests to `http://localhost:8787/hook/anything` and watch them stream in via WebSocket.
 
 ## Hosting
 
-The app deploys to GHCR via GitHub Actions on push to `main`. The workflow builds a Docker image tagged as `ghcr.io/petrihanninen/req:latest` plus a timestamped tag.
+The app runs on Cloudflare Workers at `req.petrihanninen.com`:
 
-To add it to the homelab K3s cluster, create manifests in `homelab/apps/req/` (namespace, deployment, service, ingress) and add an ImageRepository + ImagePolicy in `homelab/infra/image-automation/`. See `abrahangs/` or `travel/` as templates.
+- **Worker** (`src/worker.ts`) routes `/hook*`, `/api/*` and `/ws` to a single SQLite-backed Durable Object (`RequestStore`) that keeps the last 200 captured requests and pushes new ones to connected WebSocket clients (Hibernation API).
+- **Static assets** (`assets/`) — the UI — are served by the platform assets layer in front of the Worker.
+
+## Deploying
+
+Pushes to `main` deploy automatically via GitHub Actions (`.github/workflows/deploy.yml`): typecheck, then `wrangler deploy` through `cloudflare/wrangler-action`. The workflow can also be triggered manually.
+
+Required repository secrets:
+
+- `CLOUDFLARE_API_TOKEN` — API token with Workers Scripts edit permission
+- `CLOUDFLARE_ACCOUNT_ID` — the Cloudflare account id
+
+Manual deploy:
+
+```bash
+pnpm run deploy
+```

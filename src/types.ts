@@ -1,3 +1,7 @@
+export interface Env {
+  REQ_STORE: DurableObjectNamespace;
+}
+
 export interface CapturedRequest {
   id: string;
   timestamp: string;

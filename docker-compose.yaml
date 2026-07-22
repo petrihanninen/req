@@ -1,6 +1,0 @@
-services:
-  req:
-    build: .
-    ports:
-      - "8080:3000"
-    restart: unless-stopped
